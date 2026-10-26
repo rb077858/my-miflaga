@@ -183,7 +183,7 @@ export function partyBodyHtml({ url, party, categories, formToken, gallery, prev
         <h2 id="campaign-title">הקמפיין</h2>
         ${c.announcement ? `<div class="announcement"><h3>הודעת ההכרזה</h3>${paragraphs(c.announcement)}</div>` : ''}
         ${slogans.length ? `<h3>סיסמאות הבחירות</h3><ul class="slogan-list">${slogans.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
-        ${gallery.length ? `<h3>גלריית הקמפיין</h3><ul class="gallery" role="list">${gallery.map((g) => `<li><a href="/img/${esc(g.id)}" target="_blank" rel="noopener"><img src="/img/${esc(g.id)}" alt="${esc(g.title || `תוצר קמפיין של ${party.name}`)}" loading="lazy"></a></li>`).join('')}</ul>` : ''}
+        ${gallery.length ? `<h3>גלריית הקמפיין</h3><ul class="gallery" role="list">${gallery.map((g) => `<li><figure><a href="/img/${esc(g.id)}" target="_blank" rel="noopener"><img src="/img/${esc(g.id)}" alt="${esc(g.title || `תוצר קמפיין של ${party.name}`)}" loading="lazy"><span class="sr-only"> (פתיחה בגודל מלא בחלון חדש)</span></a>${g.title ? `<figcaption>${esc(g.title)}</figcaption>` : ''}</figure></li>`).join('')}</ul>` : ''}
         ${c.faq ? `<h3>שאלות ותשובות</h3>${faqHtml(c.faq)}` : ''}
       </section>` : ''}
 

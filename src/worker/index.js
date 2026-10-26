@@ -190,6 +190,7 @@ async function adminApi(request, env, url) {
     if (m === 'PATCH') return admin.patchParty(request, env, r[0]);
     if (m === 'DELETE') return admin.removeParty(request, env, r[0]);
   }
+  if ((r = match(path, '/api/admin/images/:')) && m === 'DELETE') return admin.removeImage(request, env, r[0]);
   if (path === '/api/admin/reports' && m === 'GET') return admin.listReports(request, env, url);
   if ((r = match(path, '/api/admin/reports/:')) && m === 'PATCH') return admin.patchReport(request, env, r[0]);
   if (path === '/api/admin/submissions' && m === 'GET') return admin.listSubmissions(request, env, url);

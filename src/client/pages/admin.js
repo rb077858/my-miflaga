@@ -156,6 +156,8 @@ async function partyDetail(id) {
         <button type="button" class="btn btn-ghost btn-sm" data-clear="campaign">ריקון טקסטי הקמפיין</button>
       </div>
     </form>
+    <h3 class="h5">גלריה (${d.gallery.length})</h3>
+    ${d.gallery.length ? html`<ul class="gallery owner" role="list">${d.gallery.map((g) => html`<li data-gimg="${g.id}"><a href="/img/${g.id}" target="_blank" rel="noopener"><img src="/img/${g.id}" alt="${g.title || 'תמונה בגלריה'}" loading="lazy"></a><div class="gallery-meta"><span class="small">${g.title}</span><button type="button" class="icon-btn danger" data-del-gimg aria-label="${`הסרת ${g.title || 'התמונה'}`}">🗑</button></div></li>`)}</ul>` : html`<p class="muted small">אין תמונות בגלריה.</p>`}
     ${d.reports.length ? html`<h3 class="h5">דיווחים</h3><ul class="activity">${d.reports.map((r) => html`<li><span>${REPORT_REASONS[r.reason] || r.reason}: ${r.details || '—'}</span><span class="badge">${r.status}</span></li>`)}</ul>` : ''}
     <h3 class="h5">מחיקה חריגה</h3>
     <p class="muted small">מוחקת את המפלגה ואת כל הנתונים שלה. הבעלים יוכלו להקים מפלגה חדשה. הפעולה נרשמת ביומן עם הסיבה.</p>
@@ -183,6 +185,12 @@ async function partyDetail(id) {
       const field = clear.dataset.clear;
       if (!(await confirmDialog({ title: 'לרוקן את התוכן?', body: 'התוכן יוסר מהאתר הציבורי. הפעולה נרשמת ביומן.', confirmLabel: 'ריקון', danger: true }))) return;
       await patch({ [field]: field === 'campaign' ? {} : [] }, 'התוכן הוסר.');
+    }
+    const gimg = e.target.closest('[data-del-gimg]');
+    if (gimg) {
+      if (!(await confirmDialog({ title: 'להסיר את התמונה מהגלריה?', body: 'התמונה תימחק מהאתר הציבורי. הפעולה נרשמת ביומן.', confirmLabel: 'הסרה', danger: true }))) return;
+      const li = gimg.closest('[data-gimg]');
+      try { await api(`/api/admin/images/${li.dataset.gimg}`, { method: 'DELETE' }); li.remove(); toast('התמונה הוסרה ונרשמה ביומן.', 'success'); } catch (err) { toast(err.message, 'error'); }
     }
     if (e.target.closest('[data-view-subs]')) { dlg.close(); tab = 'submissions'; subsPartyId = id; go(); }
     if (e.target.closest('[data-remove]')) {

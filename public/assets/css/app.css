@@ -358,8 +358,13 @@ input.narrow { width: 80px !important; }
 .slogan-list { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
 .slogan-list li { background: var(--p); color: var(--on-p); padding: 8px 16px; border-radius: 999px; font-weight: 700; }
 .gallery { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-.gallery img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: var(--radius-sm); border: 1px solid var(--line); display: block; background: var(--bg-sunk); }
+.gallery img { width: 100%; aspect-ratio: 3 / 4; object-fit: contain; border-radius: var(--radius-sm); border: 1px solid var(--line); display: block; background: var(--bg-sunk); }
 .gallery.owner li { position: relative; }
+.gallery figure { margin: 0; }
+.gallery figcaption { font-size: .85rem; color: var(--muted); margin-top: 4px; }
+.upload-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; margin-bottom: 16px; }
+.upload-row .field { flex: 1 1 240px; margin: 0; }
+.upload-row .upload-status { flex-basis: 100%; margin: 0; }
 .gallery-meta { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 6px; }
 .faq details { background: var(--bg-elev); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 8px; }
 .faq summary { font-weight: 700; cursor: pointer; }

@@ -242,6 +242,12 @@ describe('זרימה מלאה בדפדפן', () => {
     await page.getByRole('button', { name: /פוסט מרובע/ }).click();
     await page.getByRole('button', { name: /פרסום בגלריה/ }).click();
     await page.getByText('התוצר פורסם בגלריה של האתר.').waitFor();
+    // העלאת פלייר שעוצב מחוץ לאתר (משתמשים בקובץ שהסטודיו הפיק כתמונה לדוגמה)
+    await page.getByRole('textbox', { name: /כותרת או תיאור קצר/ }).fill('פלייר של חבר');
+    await page.locator('#own-file').setInputFiles(join(SHOTS, 'studio-poster.png'));
+    await page.getByText('הפלייר עלה לגלריה של האתר.').waitFor();
+    const pub = await (await fetch(`${BASE}/party/shka/`)).text();
+    assert.ok(pub.includes('פלייר של חבר'), 'הפלייר מופיע בגלריה הציבורית');
     await c.close();
   });
 

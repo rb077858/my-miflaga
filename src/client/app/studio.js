@@ -5,7 +5,8 @@ import { toast, setBusy, share, confirmDialog } from '../core/ui.js';
 import { store, publicUrl } from './state.js';
 import { TEMPLATES, TEMPLATE_MAP } from '../studio/templates.js';
 import { buildSvg, renderBlob, renderPdf, download, fileName } from '../studio/export.js';
-import { uploadBlob } from './upload.js';
+import { uploadBlob, prepareImage, ACCEPT_ATTR } from './upload.js';
+import { LIMITS } from '../../shared/constants.js';
 import { EMPTY } from '../../shared/humor.js';
 
 const STYLE_OPTIONS = [['', 'ברירת מחדל'], ['gradient', 'מעבר צבע'], ['pattern', 'פסים'], ['dots', 'נקודות'], ['light', 'בהיר']];
@@ -58,6 +59,12 @@ export default async function studio(view) {
     </div>
     <section class="card" aria-labelledby="gal-title">
       <h2 id="gal-title" class="h4">הגלריה באתר המפלגה</h2>
+      <p class="muted">אפשר לפרסם כאן תוצרים מהסטודיו, או להעלות פליירים ותמונות שעיצבתם בעצמכם (עד ${LIMITS.galleryImages} פריטים). רק תוכן שמותר לכם לפרסם, בלי פרטים אישיים של אחרים ובלי סמלים רשמיים.</p>
+      <form class="upload-row" id="own-upload" novalidate>
+        <div class="field"><label for="own-title">כותרת או תיאור קצר (לא חובה, משמש גם כטקסט חלופי)</label><input id="own-title" maxlength="80" placeholder="למשל: פלייר ההכרזה"></div>
+        <label class="btn btn-secondary file-btn">📤 העלאת פלייר או תמונה<input type="file" id="own-file" accept="${ACCEPT_ATTR}" class="sr-only"></label>
+        <p class="upload-status small" role="status" aria-live="polite"></p>
+      </form>
       <div id="gallery-list"></div>
     </section>`);
 
@@ -149,6 +156,28 @@ export default async function studio(view) {
     if (!gallery.length) { render(box, html`<p class="empty-inline">${EMPTY.gallery}</p>`); return; }
     render(box, html`<ul class="gallery owner" role="list">${gallery.map((g) => html`<li><img src="/img/${g.id}" alt="${g.title || 'תוצר'}" loading="lazy"><div class="gallery-meta"><span class="small">${g.title}</span><button type="button" class="icon-btn danger" data-del-img="${g.id}" aria-label="${`הסרת ${g.title || 'התמונה'} מהגלריה`}">🗑</button></div></li>`)}</ul>`);
   }
+  view.querySelector('#own-file').addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    e.target.value = '';
+    if (!file) return;
+    const status = view.querySelector('#own-upload .upload-status');
+    if (gallery.length >= LIMITS.galleryImages) { status.textContent = `בגלריה יש מקום ל-${LIMITS.galleryImages} פריטים. מחקו אחד קודם.`; return; }
+    status.textContent = 'מכווצים ומעלים…';
+    try {
+      // פליירים לרוב אנכיים: מקטינים לצלע ארוכה של 1600 פיקסלים בלי חיתוך
+      const blob = await prepareImage(file, { max: 1600 });
+      const title = view.querySelector('#own-title').value.trim() || file.name.replace(/\.[a-z0-9]+$/i, '').slice(0, 80);
+      await uploadBlob(blob, 'gallery', title);
+      view.querySelector('#own-title').value = '';
+      status.textContent = 'הועלה ופורסם בגלריה.';
+      toast('הפלייר עלה לגלריה של האתר.', 'success');
+      await loadGallery();
+    } catch (err) {
+      status.textContent = err.message;
+      toast(err.message, 'error');
+    }
+  });
+
   view.querySelector('#gallery-list').addEventListener('click', async (e) => {
     const btn = e.target.closest('[data-del-img]');
     if (!btn) return;
