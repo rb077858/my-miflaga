@@ -10,7 +10,36 @@ export const store = {
   categories: [],
   disabledTemplates: [],
   isAdmin: false,
+  // מצב מנהל: עריכה וצפייה במפלגה של משתמש אחר (גם טיוטה או פרטית). השרת בודק הרשאת מנהל בכל שמירה.
+  adminPartyId: null,
+  adminGallery: [],
 };
+
+const ADMIN_KEY = 'miflaga:admin-party';
+
+export function adminPartyFromUrl() {
+  const q = new URLSearchParams(location.search).get('admin_party');
+  try {
+    if (q && /^[A-Za-z0-9]{8,40}$/.test(q)) sessionStorage.setItem(ADMIN_KEY, q);
+    return sessionStorage.getItem(ADMIN_KEY);
+  } catch {
+    return q;
+  }
+}
+
+export function exitAdminMode() {
+  try { sessionStorage.removeItem(ADMIN_KEY); } catch { /* ignore */ }
+  store.adminPartyId = null;
+}
+
+export async function loadAdminParty(id) {
+  const data = await api(`/api/admin/parties/${encodeURIComponent(id)}`);
+  store.adminPartyId = id;
+  store.party = data.party;
+  store.adminGallery = data.gallery || [];
+  store.adminOwner = data.owner;
+  return data;
+}
 
 export async function loadMe() {
   const data = await api('/api/me');
@@ -24,6 +53,13 @@ export async function loadMe() {
 }
 
 export async function savePatch(patch, { quiet = false } = {}) {
+  if (store.adminPartyId) {
+    const { wizard_step: _skip, ...rest } = patch;
+    await api(`/api/admin/parties/${encodeURIComponent(store.adminPartyId)}`, { method: 'PATCH', body: rest });
+    await loadAdminParty(store.adminPartyId);
+    if (!quiet) toast('נשמר (כמנהל, ונרשם ביומן).', 'success');
+    return store.party;
+  }
   const data = await api('/api/me/party', { method: 'PATCH', body: patch });
   store.party = data.party;
   if (!quiet) toast(pick(MESSAGES.saved), 'success');

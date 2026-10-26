@@ -50,7 +50,7 @@ export default function stepEmblem(container) {
         <fieldset class="field"><legend>או: תמונה משלכם</legend>
           <p class="hint">PNG, JPEG או WebP. התמונה תוקטן ל-512 פיקסלים ותיחתך לריבוע. רק תמונות שיש לכם זכות להשתמש בהן, ובלי סמלים רשמיים.</p>
           <div class="btn-row">
-            <label class="btn btn-ghost btn-sm file-btn">📷 העלאת תמונה<input type="file" accept="${ACCEPT_ATTR}" data-upload class="sr-only"></label>
+            <label class="btn btn-ghost btn-sm file-btn" ${store.adminPartyId ? 'hidden' : ''}>📷 העלאת תמונה<input type="file" accept="${ACCEPT_ATTR}" data-upload class="sr-only"></label>
             <button type="button" class="btn btn-ghost btn-sm" data-remove-image ${emblem.image ? '' : 'hidden'}>הסרת התמונה</button>
           </div>
           <p class="upload-status small" role="status" aria-live="polite"></p>
