@@ -136,6 +136,25 @@ describe('ניהול מפלגות', () => {
     assert.ok(log.some((l) => l.action === 'image:delete'));
   });
 
+  test('מנהל צופה ועורך טיוטה של משתמש אחר, כולל מצע ופרסום', async () => {
+    const draft = await c.post('/api/me/party', { token: 'bob', body: { ...BASIC_PARTY, name: 'טיוטה סודית של בוב' } });
+    const id = draft.json.party.id;
+    const d = await c.get(`/api/admin/parties/${id}`, { token: 'admin' });
+    assert.equal(d.json.party.status, 'draft');
+    assert.equal((await c.get(`/api/admin/parties/${id}`, { token: 'alice' })).status, 403);
+    const r = await c.patch(`/api/admin/parties/${id}`, { token: 'admin', body: {
+      slogan: 'נערך על ידי המנהל', platform: [{ topic: 'food', title: 'שניצל', promise: 'שניצל לכולם' }], visibility: 'public', status: 'published',
+    } });
+    assert.equal(r.status, 200);
+    const after = (await c.get(`/api/admin/parties/${id}`, { token: 'admin' })).json.party;
+    assert.equal(after.slogan, 'נערך על ידי המנהל');
+    assert.equal(after.platform.length, 1);
+    assert.equal(after.status, 'published');
+    assert.ok(after.published_at);
+    assert.equal((await c.get(`/party/${after.slug}/`)).status, 200);
+    assert.equal((await c.patch(`/api/admin/parties/${id}`, { token: 'admin', body: { status: 'weird' } })).status, 422);
+  });
+
   test('קטגוריות, ספריית טקסטים והגדרות תבניות', async () => {
     assert.equal((await c.post('/api/admin/categories', { token: 'admin', body: { id: 'army', label: 'מילואים', emoji: '🪖' } })).status, 200);
     assert.ok((await c.get('/api/categories')).json.items.some((x) => x.id === 'army'));

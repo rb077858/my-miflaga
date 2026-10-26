@@ -136,7 +136,7 @@ export { wireSuggestions };
 export default async function wizard(view, { navigate, refreshShell }) {
   const creating = !store.party;
   const params = new URLSearchParams(location.search);
-  const maxStep = creating ? 1 : Math.max(store.party.wizard_step || 1, store.party.status === 'published' ? 6 : 1);
+  const maxStep = creating ? 1 : store.adminPartyId ? 6 : Math.max(store.party.wizard_step || 1, store.party.status === 'published' ? 6 : 1);
   let step = creating ? 1 : Math.min(Math.max(Number(params.get('step')) || store.party.wizard_step || 1, 1), 6);
   if (!creating && step > maxStep) step = maxStep;
   const meta = STEPS[step - 1];

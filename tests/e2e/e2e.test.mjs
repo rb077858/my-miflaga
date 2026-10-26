@@ -329,6 +329,44 @@ describe('זרימה מלאה בדפדפן', () => {
     assert.ok(home.includes('מפלגות נבחרות'));
   });
 
+  test('מנהל: צפייה ועריכה מלאה של טיוטה של משתמש אחר, ולשוניות ניהול בנייד', async () => {
+    const H = { authorization: `Bearer ${TOKENS.carol}`, 'content-type': 'application/json' };
+    const created = await (await fetch(`${BASE}/api/me/party`, { method: 'POST', headers: H, body: JSON.stringify({ name: 'הטיוטה של קרול', acronym: 'קר', slogan: 'בינתיים טיוטה', short_desc: 'עוד לא פורסם', category: 'daily' }) })).json();
+    const id = created.party.id;
+    const a = await ctx('admin', { width: 375, height: 800 });
+    const page = await a.newPage();
+    await page.goto(`${BASE}/admin/#parties`);
+    await page.getByRole('tab', { name: /מפלגות/ }).waitFor();
+    for (const name of [/דיווחים/, /יומן/, /קטגוריות/, /סקירה/]) {
+      await page.getByRole('tab', { name }).click();
+      await page.waitForTimeout(400);
+      await noHorizontalScroll(page);
+      assert.equal(await page.evaluate(() => window.scrollX), 0);
+    }
+    await page.getByRole('tab', { name: /מפלגות/ }).click();
+    await page.locator(`a[href="/app/preview/?admin_party=${id}"]`).first().waitFor();
+    await noHorizontalScroll(page);
+    await shot(page, '12-admin-parties-mobile');
+    await page.goto(`${BASE}/app/preview/?admin_party=${id}`);
+    await page.getByRole('heading', { level: 1, name: 'הטיוטה של קרול' }).waitFor();
+    assert.ok(await page.getByText(/מצב מנהל/).isVisible());
+    await page.goto(`${BASE}/app/edit/?admin_party=${id}&step=1`);
+    await page.getByRole('textbox', { name: 'סיסמת בחירות', exact: true }).fill('נערך על ידי המנהל');
+    await page.getByRole('button', { name: /שמירת טיוטה/ }).click();
+    await page.getByText(/נשמר \(כמנהל/).waitFor();
+    await page.goto(`${BASE}/app/edit/?step=6`);
+    await page.getByRole('button', { name: /פרסום המפלגה/ }).click();
+    await page.getByText(/המפלגה פורסמה \(כמנהל/).waitFor();
+    await noHorizontalScroll(page);
+    await page.getByRole('button', { name: 'יציאה לממשק הניהול' }).click();
+    await page.waitForURL(/\/admin\//);
+    await a.close();
+    const pub = await (await fetch(`${BASE}/party/${created.party.slug}/`)).text();
+    assert.ok(pub.includes('נערך על ידי המנהל'));
+    const own = await (await fetch(`${BASE}/api/me`, { headers: H })).json();
+    assert.equal(own.party.status, 'published', 'הבעלים רואה את השינוי');
+  });
+
   test('נייד (375px): בלי גלילה אופקית בדפים המרכזיים', async () => {
     const c = await ctx('alice', { width: 375, height: 800 });
     const page = await c.newPage();

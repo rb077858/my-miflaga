@@ -6,7 +6,8 @@ import { partyBodyHtml } from '../../shared/party-view.js';
 
 export default async function preview(view) {
   let gallery = [];
-  try { gallery = (await api('/api/me/gallery')).items; } catch { gallery = []; }
+  if (store.adminPartyId) gallery = store.adminGallery;
+  else try { gallery = (await api('/api/me/gallery')).items; } catch { gallery = []; }
   const party = { ...store.party, supporters_count: store.party.show_supporter_count ? store.party.supporters_count : null, contact_text: store.party.show_contact ? store.party.contact_text : '' };
   const url = `${location.origin}/party/${encodeURIComponent(party.slug)}/`;
   render(view, html`

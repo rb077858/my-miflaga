@@ -186,7 +186,7 @@ export async function getParty(request, env, id) {
   });
 }
 
-const MOD_FIELDS = ['mod_status', 'mod_note', 'featured', 'featured_rank', 'home_hidden'];
+const MOD_FIELDS = ['mod_status', 'mod_note', 'featured', 'featured_rank', 'home_hidden', 'status'];
 
 export async function patchParty(request, env, id) {
   const admin = await requireAdmin(request, env);
@@ -202,6 +202,11 @@ export async function patchParty(request, env, id) {
   if ('featured' in body) update.featured = body.featured ? 1 : 0;
   if ('featured_rank' in body) update.featured_rank = Math.max(0, Math.min(999, Number(body.featured_rank) || 0));
   if ('home_hidden' in body) update.home_hidden = body.home_hidden ? 1 : 0;
+  if ('status' in body) {
+    if (!['draft', 'published'].includes(body.status)) throw new HttpError(422, 'invalid', 'סטטוס פרסום לא תקין');
+    update.status = body.status;
+    if (body.status === 'published' && !party.published_at) update.published_at = now();
+  }
 
   // עריכת תוכן ציבורי (לתיקון או להסרת תוכן פוגעני)
   const content = {};

@@ -59,8 +59,8 @@ async function overview() {
       </section>
     </div>
     <section class="card"><h2 class="h4">שגיאות תפעוליות אחרונות</h2>
-      ${d.errors.length ? html`<div class="table-wrap"><table class="table"><thead><tr><th scope="col">זמן</th><th scope="col">נתיב</th><th scope="col">הודעה</th></tr></thead>
-      <tbody>${d.errors.map((e) => html`<tr><td>${dt(e.created_at)}</td><td dir="ltr">${e.route}</td><td>${e.message}</td></tr>`)}</tbody></table></div>` : html`<p class="empty-inline">אין שגיאות. שקט חשוד, אבל נקבל.</p>`}
+      ${d.errors.length ? html`<div class="table-wrap stack-mobile"><table class="table"><thead><tr><th scope="col">זמן</th><th scope="col">נתיב</th><th scope="col">הודעה</th></tr></thead>
+      <tbody>${d.errors.map((e) => html`<tr><td data-label="זמן">${dt(e.created_at)}</td><td dir="ltr" data-label="נתיב">${e.route}</td><td data-label="הודעה">${e.message}</td></tr>`)}</tbody></table></div>` : html`<p class="empty-inline">אין שגיאות. שקט חשוד, אבל נקבל.</p>`}
     </section>`);
   panel().addEventListener('click', onAction);
 }
@@ -100,18 +100,18 @@ async function drawPartyTable() {
   const q = new URLSearchParams(Object.entries(partyFilter).filter(([, v]) => v));
   const { items } = await api(`/api/admin/parties?${q}`);
   if (!items.length) { render(box, html`<p class="empty-inline">לא נמצאו מפלגות.</p>`); return; }
-  render(box, html`<p class="muted small">${items.length} מפלגות</p><div class="table-wrap"><table class="table">
+  render(box, html`<p class="muted small">${items.length} מפלגות</p><div class="table-wrap stack-mobile"><table class="table">
     <caption class="sr-only">רשימת המפלגות</caption>
     <thead><tr><th scope="col">מפלגה</th><th scope="col">בעלים</th><th scope="col">פרסום</th><th scope="col">ניהול</th><th scope="col">תומכים</th><th scope="col">דיווחים</th><th scope="col">נוצרה</th><th scope="col"><span class="sr-only">פעולות</span></th></tr></thead>
     <tbody>${items.map((p) => html`<tr>
       <td><div class="cell-party"><span class="mini-emblem">${raw(renderEmblem(p, { id: `a-${p.id}`, size: 32 }))}</span><div><strong>${p.name}</strong>${p.featured ? ' ⭐' : ''}<br><span class="muted small" dir="ltr">/party/${p.slug}/</span></div></div></td>
-      <td class="small">${p.owner_email || '—'}</td>
-      <td>${p.status === 'published' ? (p.visibility === 'public' ? 'ציבורית' : 'פרטית') : 'טיוטה'}</td>
-      <td><span class="badge badge-${p.mod_status === 'ok' ? 'green' : p.mod_status === 'blocked' ? 'red' : 'amber'}">${MOD[p.mod_status]}</span>${p.home_hidden ? html`<br><span class="small muted">הוסרה מדף הבית</span>` : ''}</td>
-      <td>${p.supporters_count}</td>
-      <td>${p.open_reports ? html`<span class="badge badge-red">${p.open_reports}</span>` : '0'}</td>
-      <td class="small">${formatDate(p.created_at)}</td>
-      <td><button type="button" class="btn btn-ghost btn-sm" data-open-party="${p.id}">פרטים</button></td>
+      <td data-label="בעלים" class="small">${p.owner_email || '—'}</td>
+      <td data-label="פרסום">${p.status === 'published' ? (p.visibility === 'public' ? 'ציבורית' : 'פרטית') : 'טיוטה'}</td>
+      <td data-label="ניהול"><span class="badge badge-${p.mod_status === 'ok' ? 'green' : p.mod_status === 'blocked' ? 'red' : 'amber'}">${MOD[p.mod_status]}</span>${p.home_hidden ? html`<br><span class="small muted">הוסרה מדף הבית</span>` : ''}</td>
+      <td data-label="תומכים">${p.supporters_count}</td>
+      <td data-label="דיווחים">${p.open_reports ? html`<span class="badge badge-red">${p.open_reports}</span>` : '0'}</td>
+      <td data-label="נוצרה" class="small">${formatDate(p.created_at)}</td>
+      <td class="cell-actions"><div class="btn-row tight"><button type="button" class="btn btn-ghost btn-sm" data-open-party="${p.id}">פרטים</button><a class="btn btn-ghost btn-sm" href="/app/preview/?admin_party=${encodeURIComponent(p.id)}">צפייה</a><a class="btn btn-ghost btn-sm" href="/app/edit/?admin_party=${encodeURIComponent(p.id)}&step=1">עריכה</a></div></td>
     </tr>`)}</tbody></table></div>`);
 }
 
@@ -127,7 +127,9 @@ async function partyDetail(id) {
       <p class="muted small"><span dir="ltr">/party/${p.slug}/</span> · ${p.status === 'published' ? 'מפורסמת' : 'טיוטה'} · ${p.visibility === 'public' ? 'ציבורית' : 'פרטית'} · נוצרה ${formatDate(p.created_at)}</p>
       <p class="small">בעלים: ${d.owner?.email || '—'} ${d.owner?.name ? `(${d.owner.name})` : ''}</p></div></div>
     <div class="btn-row">
-      ${p.status === 'published' && p.visibility === 'public' ? html`<a class="btn btn-ghost btn-sm" href="/party/${encodeURIComponent(p.slug)}/" target="_blank" rel="noopener">צפייה באתר ↗</a>` : ''}
+      <a class="btn btn-primary btn-sm" href="/app/edit/?admin_party=${encodeURIComponent(p.id)}&step=1">✏️ עריכה מלאה</a>
+      <a class="btn btn-ghost btn-sm" href="/app/preview/?admin_party=${encodeURIComponent(p.id)}">👀 צפייה (גם טיוטה ופרטית)</a>
+      ${p.status === 'published' && p.visibility === 'public' ? html`<a class="btn btn-ghost btn-sm" href="/party/${encodeURIComponent(p.slug)}/" target="_blank" rel="noopener">באתר הציבורי ↗</a>` : ''}
       <button type="button" class="btn btn-ghost btn-sm" data-view-subs>פניות למפלגה (${d.counts.submissions})</button>
     </div>
     <h3 class="h5">פרסום וניהול</h3>
@@ -264,12 +266,12 @@ async function content() {
       <form id="ann-form" class="add-row"><label for="ann" class="sr-only">הודעה</label><input id="ann" maxlength="200" value="${settings.announcement || ''}" placeholder="למשל: גרסה חדשה לסטודיו! (ריק = בלי הודעה)"><button class="btn btn-primary btn-sm" type="submit">שמירה</button></form>
     </section>
     <section class="card"><h2 class="h4">קטגוריות הומור</h2>
-      <div class="table-wrap"><table class="table"><thead><tr><th scope="col">מזהה</th><th scope="col">שם</th><th scope="col">אימוג'י</th><th scope="col">סדר</th><th scope="col">פעילה</th><th scope="col"><span class="sr-only">שמירה</span></th></tr></thead>
-      <tbody>${cats.items.map((c) => html`<tr data-cat="${c.id}"><td dir="ltr">${c.id}</td>
-        <td><label class="sr-only" for="cl-${c.id}">שם</label><input id="cl-${c.id}" data-k="label" value="${c.label}" maxlength="40"></td>
-        <td><label class="sr-only" for="ce-${c.id}">אימוג'י</label><input id="ce-${c.id}" data-k="emoji" value="${c.emoji}" maxlength="8" class="narrow"></td>
-        <td><label class="sr-only" for="cp-${c.id}">סדר</label><input id="cp-${c.id}" data-k="position" type="number" value="${c.position}" class="narrow"></td>
-        <td><input type="checkbox" data-k="active" ${c.active ? 'checked' : ''} aria-label="${`קטגוריה ${c.label} פעילה`}"></td>
+      <div class="table-wrap stack-mobile"><table class="table"><thead><tr><th scope="col">מזהה</th><th scope="col">שם</th><th scope="col">אימוג'י</th><th scope="col">סדר</th><th scope="col">פעילה</th><th scope="col"><span class="sr-only">שמירה</span></th></tr></thead>
+      <tbody>${cats.items.map((c) => html`<tr data-cat="${c.id}"><td dir="ltr" data-label="מזהה">${c.id}</td>
+        <td data-label="שם"><label class="sr-only" for="cl-${c.id}">שם</label><input id="cl-${c.id}" data-k="label" value="${c.label}" maxlength="40"></td>
+        <td data-label="אימוג'י"><label class="sr-only" for="ce-${c.id}">אימוג'י</label><input id="ce-${c.id}" data-k="emoji" value="${c.emoji}" maxlength="8" class="narrow"></td>
+        <td data-label="סדר"><label class="sr-only" for="cp-${c.id}">סדר</label><input id="cp-${c.id}" data-k="position" type="number" value="${c.position}" class="narrow"></td>
+        <td data-label="פעילה"><input type="checkbox" data-k="active" ${c.active ? 'checked' : ''} aria-label="${`קטגוריה ${c.label} פעילה`}"></td>
         <td><button type="button" class="btn btn-ghost btn-sm" data-save-cat>שמירה</button></td></tr>`)}</tbody></table></div>
       <form id="new-cat" class="add-row"><label for="nc-id" class="sr-only">מזהה באנגלית</label><input id="nc-id" placeholder="מזהה (english_id)" dir="ltr" maxlength="20"><label for="nc-label" class="sr-only">שם</label><input id="nc-label" placeholder="שם הקטגוריה" maxlength="40"><label for="nc-emoji" class="sr-only">אימוג'י</label><input id="nc-emoji" placeholder="🙂" class="narrow" maxlength="8"><button class="btn btn-secondary btn-sm" type="submit">הוספה</button></form>
     </section>
@@ -297,17 +299,31 @@ async function content() {
 // ---------- יומן ----------
 async function log() {
   const { items } = await api('/api/admin/log');
-  render(panel(), html`${items.length ? html`<div class="table-wrap"><table class="table"><caption class="sr-only">יומן פעולות מנהל</caption>
+  render(panel(), html`${items.length ? html`<div class="table-wrap stack-mobile"><table class="table"><caption class="sr-only">יומן פעולות מנהל</caption>
     <thead><tr><th scope="col">זמן</th><th scope="col">מנהל</th><th scope="col">פעולה</th><th scope="col">יעד</th><th scope="col">פרטים</th></tr></thead>
-    <tbody>${items.map((l) => html`<tr><td class="small">${dt(l.created_at)}</td><td class="small">${l.admin_email}</td><td dir="ltr">${l.action}</td><td class="small" dir="ltr">${l.target_type}${l.target_id ? `:${l.target_id}` : ''}</td><td class="small log-details">${l.details}</td></tr>`)}</tbody></table></div>` : html`<p class="empty-inline">היומן ריק.</p>`}`);
+    <tbody>${items.map((l) => html`<tr><td class="small" data-label="זמן">${dt(l.created_at)}</td><td class="small" data-label="מנהל">${l.admin_email}</td><td dir="ltr" data-label="פעולה">${l.action}</td><td class="small" dir="ltr" data-label="יעד">${l.target_type}${l.target_id ? `:${l.target_id}` : ''}</td><td class="small log-details" data-label="פרטים">${l.details}</td></tr>`)}</tbody></table></div>` : html`<p class="empty-inline">היומן ריק.</p>`}`);
 }
 
 const VIEWS = { overview, parties, reports, submissions, content, log };
 
+function syncTabs() {
+  for (const b of root.querySelectorAll('[data-tab]')) {
+    const on = b.dataset.tab === tab;
+    b.setAttribute('aria-selected', on ? 'true' : 'false');
+    b.tabIndex = on ? 0 : -1;
+  }
+  panel().setAttribute('aria-labelledby', `t-${tab}`);
+}
+
 async function go() {
   if (!VIEWS[tab]) tab = 'overview';
   history.replaceState(null, '', `#${tab}`);
-  shell();
+  // השלד והלשוניות נבנים פעם אחת, כדי שמעבר בין לשוניות לא יקפיץ את הדף או את שורת הלשוניות
+  if (!panel()) shell();
+  syncTabs();
+  // הפאנל מוחלף בעותק חדש, כדי שמאזינים של לשונית קודמת לא יישארו עליו
+  const fresh = panel().cloneNode(false);
+  panel().replaceWith(fresh);
   render(panel(), html`<p class="muted" role="status"><span class="spinner small" aria-hidden="true"></span> טוענים…</p>`);
   try {
     await VIEWS[tab]();
@@ -364,6 +380,11 @@ root.addEventListener('keydown', (e) => {
   if (e.key === 'End') i = ids.length - 1;
   tab = ids[i];
   go().then(() => document.getElementById(`t-${tab}`)?.focus());
+});
+
+window.addEventListener('hashchange', () => {
+  const next = location.hash.replace('#', '');
+  if (next && next !== tab && VIEWS[next]) { tab = next; go(); }
 });
 
 async function start() {

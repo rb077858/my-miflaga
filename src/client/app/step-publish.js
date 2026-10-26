@@ -30,8 +30,8 @@ export default function stepPublish(container, { navigate, refreshShell } = {}) 
         <div class="slug-row">
           <span class="slug-prefix" dir="ltr">${location.host}/party/</span>
           <label for="slug" class="sr-only">נתיב ציבורי</label>
-          <input id="slug" name="slug" dir="ltr" value="${p.slug}" maxlength="40" autocomplete="off" aria-describedby="slug-hint slug-err">
-          <button type="button" class="btn btn-secondary btn-sm" data-change-slug>עדכון הכתובת</button>
+          <input id="slug" name="slug" dir="ltr" value="${p.slug}" maxlength="40" autocomplete="off" aria-describedby="slug-hint slug-err" ${store.adminPartyId ? 'readonly' : ''}>
+          ${store.adminPartyId ? '' : html`<button type="button" class="btn btn-secondary btn-sm" data-change-slug>עדכון הכתובת</button>`}
         </div>
         <p class="hint" id="slug-hint">אותיות באנגלית קטנות, ספרות ומקפים. ${p.published_at ? 'אחרי שינוי, הכתובת הישנה תמשיך להפנות לחדשה, כך שקישורים ששיתפתם לא יישברו.' : ''}</p>
         <p class="field-error" id="slug-err" aria-live="polite"></p>
@@ -120,6 +120,13 @@ export default function stepPublish(container, { navigate, refreshShell } = {}) 
       if (!(await saveSettings(null, true))) return;
       setBusy(btn, true, 'מפרסמים…');
       try {
+        if (store.adminPartyId) {
+          await savePatch({ status: 'published' }, { quiet: true });
+          toast('המפלגה פורסמה (כמנהל, ונרשם ביומן).', 'success');
+          refreshShell?.();
+          draw();
+          return;
+        }
         const r = await api('/api/me/party/publish', { method: 'POST', body: {} });
         store.party = r.party;
         toast(MESSAGES.published, 'success', 6000);
@@ -135,8 +142,8 @@ export default function stepPublish(container, { navigate, refreshShell } = {}) 
     if (btn.hasAttribute('data-unpublish')) {
       setBusy(btn, true);
       try {
-        const r = await api('/api/me/party/unpublish', { method: 'POST', body: {} });
-        store.party = r.party;
+        if (store.adminPartyId) await savePatch({ status: 'draft' }, { quiet: true });
+        else store.party = (await api('/api/me/party/unpublish', { method: 'POST', body: {} })).party;
         toast('המפלגה חזרה לטיוטה. האתר הציבורי כבר לא נגיש.', 'info');
         refreshShell?.();
         draw();

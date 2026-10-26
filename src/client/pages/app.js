@@ -2,7 +2,7 @@
 import { currentUser, login } from '../core/auth.js';
 import { html, render, raw } from '../core/dom.js';
 import { toast } from '../core/ui.js';
-import { store, loadMe, statusInfo } from '../app/state.js';
+import { store, loadMe, statusInfo, adminPartyFromUrl, loadAdminParty, exitAdminMode } from '../app/state.js';
 import { renderEmblem } from '../../shared/emblem.js';
 import { MESSAGES } from '../../shared/humor.js';
 
@@ -19,6 +19,12 @@ const ROUTES = {
   '/app/preview/': () => import('../app/preview.js'),
 };
 
+const ADMIN_NAV = [
+  ['/app/edit/', '✏️', 'עריכת המפלגה'],
+  ['/app/preview/', '👀', 'צפייה באתר המפלגה'],
+];
+const ADMIN_ROUTES = new Set(['/app/edit/', '/app/preview/']);
+
 const NAV = [
   ['/app/', '🏠', 'סקירה'],
   ['/app/edit/', '✏️', 'עריכת המפלגה'],
@@ -32,7 +38,13 @@ const NAV = [
 function shell() {
   const party = store.party;
   const st = statusInfo();
+  const adminMode = !!store.adminPartyId;
+  const nav = adminMode ? ADMIN_NAV : party ? NAV : NAV.slice(0, 1);
   return html`
+  ${adminMode ? html`<div class="container"><div class="alert alert-amber admin-mode-bar" role="note">
+    <span>🛠️ <strong>מצב מנהל:</strong> צופה ועורך את "${party.name}"${store.adminOwner?.email ? ` (של ${store.adminOwner.email})` : ''}. כל שמירה נרשמת ביומן.</span>
+    <button type="button" class="btn btn-ghost btn-sm" data-exit-admin>יציאה לממשק הניהול</button>
+  </div></div>` : ''}
   <div class="container app-layout">
     <aside class="app-side" aria-label="תפריט האזור האישי">
       ${party ? html`<div class="side-party">
@@ -40,7 +52,7 @@ function shell() {
         <div><p class="side-name">${party.name}</p><span class="badge badge-${st.tone}">${st.label}</span></div>
       </div>` : ''}
       <nav><ul class="side-nav">
-        ${(party ? NAV : NAV.slice(0, 1)).map(([href, icon, label]) => html`<li><a href="${href}" data-nav><span aria-hidden="true">${icon}</span> ${label}</a></li>`)}
+        ${nav.map(([href, icon, label]) => html`<li><a href="${href}" data-nav><span aria-hidden="true">${icon}</span> ${label}</a></li>`)}
         ${store.isAdmin ? html`<li><a href="/admin/"><span aria-hidden="true">🛠️</span> ניהול המערכת</a></li>` : ''}
       </ul></nav>
     </aside>
@@ -66,6 +78,7 @@ async function route() {
   const token = ++renderToken;
   let path = location.pathname;
   if (!path.endsWith('/')) path += '/';
+  if (store.adminPartyId && !ADMIN_ROUTES.has(path)) { history.replaceState(null, '', '/app/edit/'); path = '/app/edit/'; }
   if (path === '/app/create/' && store.party) { history.replaceState(null, '', `/app/edit/${location.search}`); path = '/app/edit/'; }
   if (path !== '/app/' && path !== '/app/create/' && !store.party) { history.replaceState(null, '', '/app/'); path = '/app/'; }
   render(root, shell());
@@ -109,6 +122,7 @@ root.addEventListener('click', (e) => {
 window.addEventListener('popstate', route);
 root.addEventListener('click', (e) => {
   if (e.target.closest('[data-reload]')) location.reload();
+  if (e.target.closest('[data-exit-admin]')) { exitAdminMode(); location.href = '/admin/#parties'; }
 });
 
 async function start() {
@@ -141,6 +155,21 @@ async function start() {
       ${err.status === 401 ? html`<button class="btn btn-primary" type="button" data-relogin>התחברות מחדש</button>` : html`<button class="btn btn-primary" type="button" data-reload>לנסות שוב</button>`}</div></section>`);
     root.querySelector('[data-relogin]')?.addEventListener('click', () => login());
     return;
+  }
+  const adminId = adminPartyFromUrl();
+  if (adminId) {
+    if (!store.isAdmin) {
+      exitAdminMode();
+    } else {
+      try {
+        await loadAdminParty(adminId);
+      } catch (err) {
+        exitAdminMode();
+        toast(err.message, 'error');
+        location.href = '/admin/#parties';
+        return;
+      }
+    }
   }
   await route();
 }

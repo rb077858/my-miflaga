@@ -530,6 +530,10 @@ input.narrow { width: 80px !important; }
 .pd-head h2 { margin-bottom: 2px; }
 .page-admin .app-root { padding-top: 20px; }
 
+/* מצב מנהל באזור האישי */
+.admin-mode-bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: space-between; margin-bottom: 0; }
+.cell-actions .btn { white-space: nowrap; }
+
 /* רספונסיביות */
 @media (max-width: 1100px) {
   .studio { grid-template-columns: 1fr 270px; }
@@ -577,6 +581,22 @@ input.narrow { width: 80px !important; }
   .slug-prefix { border-radius: var(--radius-sm) var(--radius-sm) 0 0; width: 100%; padding: 8px 12px; }
   .slug-row input { border-radius: 0 0 var(--radius-sm) var(--radius-sm) !important; }
   .slug-row .btn { margin: 10px 0 0; }
+}
+@media (max-width: 720px) {
+  /* לשוניות הניהול: שורות עוטפות במקום פס גלילה אופקי */
+  .admin-tabs { flex-wrap: wrap; overflow: visible; border-bottom: 0; gap: 6px; }
+  .admin-tabs [role="tab"] { flex: 1 1 calc(50% - 6px); border: 1.5px solid var(--line); border-radius: 999px; margin: 0; padding: 8px 10px; font-size: .9rem; background: var(--bg-elev); }
+  .admin-tabs [role="tab"][aria-selected="true"] { background: var(--brand); color: #fff; border-color: var(--brand); }
+  /* טבלאות ניהול: כל שורה הופכת לכרטיס */
+  .stack-mobile { overflow: visible; border: 0; }
+  .stack-mobile thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .stack-mobile table, .stack-mobile tbody, .stack-mobile tr, .stack-mobile td { display: block; width: 100%; }
+  .stack-mobile tr { background: var(--bg-elev); border: 1px solid var(--line); border-radius: var(--radius-sm); padding: 8px 12px; margin-bottom: 10px; }
+  .stack-mobile td { border: 0; padding: 4px 0; overflow-wrap: anywhere; }
+  .stack-mobile td[data-label]::before { content: attr(data-label) ': '; font-weight: 700; color: var(--muted); }
+  .stack-mobile td input:not([type="checkbox"]) { width: 100% !important; margin-top: 4px; }
+  .log-details { max-width: none; }
+  .pd-head { flex-direction: column; align-items: flex-start; }
 }
 @media (max-width: 380px) {
   .brand-name { display: none; }

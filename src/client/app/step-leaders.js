@@ -41,7 +41,7 @@ export default function stepLeaders(container) {
         <p class="field-error" id="lc-${i}-err"></p>
       </fieldset>
       <div class="btn-row">
-        <label class="btn btn-ghost btn-sm file-btn">📷 ${m.image ? 'החלפת תמונה' : 'תמונה (לא חובה)'}<input type="file" accept="${ACCEPT_ATTR}" data-photo class="sr-only"></label>
+        <label class="btn btn-ghost btn-sm file-btn" ${store.adminPartyId ? 'hidden' : ''}>📷 ${m.image ? 'החלפת תמונה' : 'תמונה (לא חובה)'}<input type="file" accept="${ACCEPT_ATTR}" data-photo class="sr-only"></label>
         ${m.image ? html`<button type="button" class="btn btn-ghost btn-sm" data-remove-photo>הסרת התמונה</button>` : ''}
       </div>
     </li>`;
