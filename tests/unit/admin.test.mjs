@@ -124,6 +124,18 @@ describe('ניהול מפלגות', () => {
     assert.equal((await c.patch('/api/admin/submissions/s1', { token: 'admin', body: { status: 'spam' } })).status, 200);
   });
 
+  test('מנהל רואה ומסיר תמונה מגלריה של מפלגה, ומשתמש רגיל לא', async () => {
+    const PNG = new Uint8Array([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0, 0, 0, 13, 73, 72, 68, 82]);
+    const up = await c.post('/api/me/images?kind=gallery&title=פלייר', { token: 'alice', raw: PNG });
+    const d = await c.get(`/api/admin/parties/${partyId}`, { token: 'admin' });
+    assert.equal(d.json.gallery.length, 1);
+    assert.equal((await c.del(`/api/admin/images/${up.json.id}`, { token: 'bob' })).status, 403);
+    assert.equal((await c.del(`/api/admin/images/${up.json.id}`, { token: 'admin' })).status, 200);
+    assert.equal((await c.get(`/img/${up.json.id}`)).status, 404);
+    const log = (await c.get('/api/admin/log', { token: 'admin' })).json.items;
+    assert.ok(log.some((l) => l.action === 'image:delete'));
+  });
+
   test('קטגוריות, ספריית טקסטים והגדרות תבניות', async () => {
     assert.equal((await c.post('/api/admin/categories', { token: 'admin', body: { id: 'army', label: 'מילואים', emoji: '🪖' } })).status, 200);
     assert.ok((await c.get('/api/categories')).json.items.some((x) => x.id === 'army'));

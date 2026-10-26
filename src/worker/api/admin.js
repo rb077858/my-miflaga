@@ -170,16 +170,18 @@ export async function getParty(request, env, id) {
   const party = await partyById(env, id);
   if (!party) throw new HttpError(404, 'not_found', 'המפלגה לא נמצאה');
   const owner = await env.DB.prepare('SELECT id, email, name, created_at, last_seen_at FROM users WHERE id = ?').bind(party.owner_id).first();
-  const [reports, subs, sup, polls] = await Promise.all([
+  const [reports, subs, sup, polls, gallery] = await Promise.all([
     env.DB.prepare('SELECT * FROM reports WHERE party_id = ? ORDER BY created_at DESC LIMIT 50').bind(id).all(),
     env.DB.prepare('SELECT COUNT(*) AS n FROM submissions WHERE party_id = ?').bind(id).first(),
     env.DB.prepare('SELECT COUNT(*) AS n FROM supporters WHERE party_id = ?').bind(id).first(),
     env.DB.prepare('SELECT COUNT(*) AS n FROM polls WHERE party_id = ?').bind(id).first(),
+    env.DB.prepare("SELECT id, title, size, created_at FROM images WHERE party_id = ? AND kind = 'gallery' ORDER BY created_at DESC").bind(id).all(),
   ]);
   return json({
     party: { ...toOwner(party), owner_id: party.owner_id },
     owner,
     reports: reports.results,
+    gallery: gallery.results,
     counts: { submissions: subs.n, supporters: sup.n, polls: polls.n },
   });
 }
@@ -236,6 +238,15 @@ export async function removeParty(request, env, id) {
   if (reason.length < 3) throw new HttpError(422, 'invalid', 'יש לכתוב סיבה למחיקה (לתיעוד ביומן)');
   await deletePartyCascade(env, party);
   await adminLog(env, admin, 'party:delete', 'party', id, { name: party.name, slug: party.slug, owner_id: party.owner_id, reason });
+  return json({ ok: true });
+}
+
+export async function removeImage(request, env, id) {
+  const admin = await requireAdmin(request, env);
+  const img = await env.DB.prepare("SELECT id, party_id, title FROM images WHERE id = ? AND kind = 'gallery'").bind(id).first();
+  if (!img) throw new HttpError(404, 'not_found', 'התמונה לא נמצאה');
+  await env.DB.prepare('DELETE FROM images WHERE id = ?').bind(id).run();
+  await adminLog(env, admin, 'image:delete', 'party', img.party_id, { image: id, title: img.title });
   return json({ ok: true });
 }
 
