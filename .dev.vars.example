@@ -1,0 +1,7 @@
+# העתיקו לקובץ .dev.vars לפיתוח מקומי בלבד. אל תעלו את .dev.vars ל-GitHub.
+# מי מנהל (מופרד בפסיקים). בפרודקשן: npx wrangler secret put ADMIN_EMAILS
+ADMIN_EMAILS=rb077858@gmail.com
+# מחרוזת אקראית ארוכה לגיבוב IP וחתימת טפסים. בפרודקשן: npx wrangler secret put RATE_SALT
+RATE_SALT=local-dev-salt-please-change-0123456789
+# בפיתוח מקומי הכתובת הציבורית היא localhost
+PUBLIC_ORIGIN=http://localhost:8787

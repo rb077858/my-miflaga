@@ -1,0 +1,14 @@
+node_modules/
+.wrangler/
+.dev.vars
+.env
+.env.*
+!.env.example
+!.dev.vars.example
+public/assets/js/
+src/worker/version.js
+test-results/
+playwright-report/
+coverage/
+*.log
+.DS_Store
