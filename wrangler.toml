@@ -1,0 +1,34 @@
+# הגדרות Cloudflare Worker עבור "המפלגה שלי".
+# אין כאן סודות. סודות מוגדרים עם `npx wrangler secret put <NAME>` או דרך GitHub Actions.
+name = "miflaga"
+main = "src/worker/index.js"
+compatibility_date = "2025-09-01"
+workers_dev = true
+
+# הכתובת הציבורית. דורש שהדומיין reembir.com מנוהל באותו חשבון Cloudflare.
+# אפשר לבטל את השורות האלה ולעבוד רק עם כתובת workers.dev.
+routes = [
+  { pattern = "miflaga.reembir.com", custom_domain = true }
+]
+
+[assets]
+directory = "./public"
+binding = "ASSETS"
+run_worker_first = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "miflaga-db"
+# מוחלף אוטומטית בזמן הפריסה ב-GitHub Actions (ראו docs/DEPLOY.md). לפיתוח מקומי הערך לא משנה.
+database_id = "00000000-0000-0000-0000-000000000000"
+migrations_dir = "migrations"
+
+[vars]
+PUBLIC_ORIGIN = "https://miflaga.reembir.com"
+
+# ניקוי יומי של נתונים תפעוליים (רישומי קצב, שגיאות ישנות, ספאם) וסגירת הצבעות שפג מועדן.
+[triggers]
+crons = ["17 3 * * *"]
+
+[observability]
+enabled = true

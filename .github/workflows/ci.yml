@@ -1,0 +1,37 @@
+name: בדיקות
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: בדיקות שרת ויחידה
+        run: npm test
+      - name: התקנת דפדפן לבדיקות קצה-לקצה
+        run: |
+          npm i --no-save playwright@1
+          npx playwright install --with-deps chromium
+      - name: בדיקות קצה-לקצה (דפדפן אמיתי)
+        run: npm run test:e2e
+      - name: צילומי מסך ודוחות נגישות
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screens
+          path: test-results/screens
+          retention-days: 7
